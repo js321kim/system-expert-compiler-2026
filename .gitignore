@@ -41,3 +41,4 @@
 *.dwo
 load_constant
 build/
+.vscode/

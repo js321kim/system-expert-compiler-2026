@@ -1,0 +1,62 @@
+Algorithm 1: Sparse Conditional Constant Propagation
+
+Input:
+  CFG
+  SSA graph
+
+CFGWorklist = { edge(NULL, entry) }
+SSAWorklist = empty
+
+while CFGWorklist is not empty OR SSAWorklist is not empty:
+
+    x = pop one element from either CFGWorklist or SSAWorklist
+
+    if x is from CFGWorklist:
+
+        B = destination block of x
+        B.executable = true
+
+        # PHI nodes must be updated whenever a new incoming CFG edge becomes executable.
+        for each phi node P in B:
+            visit(P)
+
+        # Visit non-PHI instructions only when the block is first reached.
+        if B is visited for the first time:
+            for each non-PHI instruction I in B:
+                visit(I)
+
+        # If B has exactly one successor, propagate reachability directly.
+        # For conditional branches, reachable successors are added inside visit(branch).
+        if B has a unique successor S AND S.executable == false:
+            CFGWorklist.append(edge(B, S))
+
+    else:
+        # x is from SSAWorklist.
+        I = x
+
+        if I is a phi node:
+            visit(I)
+
+        else:
+            # Non-PHI instructions are meaningful only if their block is reachable.
+            if any incoming CFG edge to block(I) is executable:
+                visit(I)
+
+
+Algorithm 2: visit
+
+Input:
+  Instruction I
+
+if I is a phi node:
+    Meet all arguments from executable edges
+
+else if I is a conditional branch:
+    Evaluate the condition
+    Append reachable edge to CFGWorklist
+
+else:
+    Update dataflow information using transfer function
+
+if dataflow information of I changed:
+    Append all outgoing SSA edges of I to SSAWorklist
